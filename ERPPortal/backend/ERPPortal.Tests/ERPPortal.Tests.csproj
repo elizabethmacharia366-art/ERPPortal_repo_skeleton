@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ERPPortal.API\ERPPortal.API.csproj" />
+    <ProjectReference Include="..\ERPPortal.Application\ERPPortal.Application.csproj" />
+    <ProjectReference Include="..\ERPPortal.Domain\ERPPortal.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
