@@ -1,0 +1,32 @@
+# Build output directories
+bin/
+obj/
+out/
+dist/
+build/
+**/bin/
+**/obj/
+
+# Node / JS
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# User-specific & IDE files
+.vs/
+.vscode/
+.idea/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Environment & local settings
+*.env
+*.env.local
