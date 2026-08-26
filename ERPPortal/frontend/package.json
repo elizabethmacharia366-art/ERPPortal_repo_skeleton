@@ -5,20 +5,20 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vue-tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.0"
+    "vue": "^3.4.38",
+    "vue-router": "^4.4.3",
+    "pinia": "^2.2.2",
+    "axios": "^1.7.5"
   },
   "devDependencies": {
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
+    "@vitejs/plugin-vue": "^5.1.2",
     "typescript": "^5.5.3",
+    "vue-tsc": "^2.0.29",
     "vite": "^5.4.1"
   }
 }
