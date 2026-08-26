@@ -32,3 +32,4 @@ Thumbs.db
 *.env.local
 *.log
 Logs/
+appsettings.*.local.json
