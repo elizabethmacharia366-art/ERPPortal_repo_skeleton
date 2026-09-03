@@ -1,8 +1,11 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using ERPPortal.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+
+JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
