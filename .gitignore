@@ -33,3 +33,5 @@ Thumbs.db
 *.log
 Logs/
 appsettings.*.local.json
+*.tsbuildinfo
+ERPPortal/frontend/src/**/*.js
