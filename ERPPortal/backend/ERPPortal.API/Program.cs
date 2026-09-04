@@ -65,8 +65,6 @@ app.MapPost("/api/v1/leave/{id}/approve", async (string id, ICurrentUserService 
     return Results.Ok(new { message = $"Leave request {id} approved." });
 }).RequireAuthorization();
 
-// --- Admin: role & permission management -----------------------------------
-
 app.MapGet("/api/v1/admin/roles", async (ICurrentUserService currentUser, AppDbContext db) =>
 {
     if (!await currentUser.HasPermissionAsync("Roles.Manage"))
@@ -81,6 +79,28 @@ app.MapGet("/api/v1/admin/roles", async (ICurrentUserService currentUser, AppDbC
         .ToListAsync();
 
     return Results.Ok(roles);
+}).RequireAuthorization();
+
+app.MapPost("/api/v1/admin/roles/{roleId:guid}/permissions/{permissionId:guid}", async (
+    Guid roleId, Guid permissionId, ICurrentUserService currentUser, AppDbContext db) =>
+{
+    if (!await currentUser.HasPermissionAsync("Roles.Manage"))
+        return Results.Forbid();
+
+    var roleExists = await db.Roles.AnyAsync(r => r.Id == roleId);
+    var permissionExists = await db.Permissions.AnyAsync(p => p.Id == permissionId);
+    if (!roleExists || !permissionExists)
+        return Results.NotFound();
+
+    var alreadyLinked = await db.RolePermissions
+        .AnyAsync(rp => rp.RoleId == roleId && rp.PermissionId == permissionId);
+    if (alreadyLinked)
+        return Results.Ok(new { message = "Permission already granted to this role." });
+
+    db.RolePermissions.Add(new RolePermission { RoleId = roleId, PermissionId = permissionId });
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { message = "Permission granted to role successfully." });
 }).RequireAuthorization();
 
 app.MapPost("/api/v1/admin/users/{userId:guid}/roles/{roleId:guid}", async (
@@ -104,5 +124,51 @@ app.MapPost("/api/v1/admin/users/{userId:guid}/roles/{roleId:guid}", async (
 
     return Results.Ok(new { message = "Role assigned successfully." });
 }).RequireAuthorization();
+app.MapPost("/api/v1/admin/permissions", async (
+    CreatePermissionRequest request, ICurrentUserService currentUser, AppDbContext db) =>
+{
+    if (!await currentUser.HasPermissionAsync("Roles.Manage"))
+        return Results.Forbid();
+
+    if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Module))
+        return Results.BadRequest(new { error = "Permission name and module are required." });
+
+    var exists = await db.Permissions.AnyAsync(p => p.Name == request.Name);
+    if (exists)
+        return Results.Conflict(new { error = $"A permission named '{request.Name}' already exists." });
+
+    var permission = new Permission
+    {
+        Id = Guid.NewGuid(),
+        Name = request.Name,
+        Module = request.Module,
+        Description = request.Description
+    };
+    db.Permissions.Add(permission);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/api/v1/admin/permissions/{permission.Id}", permission);
+}).RequireAuthorization();
+
+app.MapPost("/api/v1/admin/roles", async (
+    CreateRoleRequest request, ICurrentUserService currentUser, AppDbContext db) =>
+{
+    if (!await currentUser.HasPermissionAsync("Roles.Manage"))
+        return Results.Forbid();
+
+    if (string.IsNullOrWhiteSpace(request.Name))
+        return Results.BadRequest(new { error = "Role name is required." });
+
+    var exists = await db.Roles.AnyAsync(r => r.Name == request.Name);
+    if (exists)
+        return Results.Conflict(new { error = $"A role named '{request.Name}' already exists." });
+
+    var role = new Role { Id = Guid.NewGuid(), Name = request.Name, Description = request.Description };
+    db.Roles.Add(role);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/api/v1/admin/roles/{role.Id}", new RoleDto(role.Id, role.Name, role.Description, new List<string>()));
+}).RequireAuthorization();
 
 app.Run();
+
