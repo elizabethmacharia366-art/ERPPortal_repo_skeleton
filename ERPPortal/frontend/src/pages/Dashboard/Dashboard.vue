@@ -25,10 +25,10 @@ function handleLogout() {
     </ul>
 
     <p v-if="authStore.can('Roles.Manage')">
-      ✅ You can manage roles and permissions.
+      You can manage roles and permissions.
     </p>
     <p v-else>
-      🚫 You do not have permission to manage roles.
+      You do not have permission to manage roles.
     </p>
 
     <button @click="handleLogout">Log out</button>
