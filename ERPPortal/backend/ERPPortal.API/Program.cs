@@ -51,6 +51,8 @@ app.MapHealthChecks("/health");
 
 app.MapGet("/api/v1/me", async (ClaimsPrincipal claims, ICurrentUserService currentUser) =>
 {
+    await currentUser.EnsureUserProvisionedAsync();
+    
     var username = claims.FindFirst("preferred_username")?.Value;
     var email = claims.FindFirst("email")?.Value;
     var permissions = await currentUser.GetPermissionsAsync();
@@ -168,6 +170,41 @@ app.MapPost("/api/v1/admin/roles", async (
     await db.SaveChangesAsync();
 
     return Results.Created($"/api/v1/admin/roles/{role.Id}", new RoleDto(role.Id, role.Name, role.Description, new List<string>()));
+}).RequireAuthorization();
+
+app.MapGet("/api/v1/admin/users", async (ICurrentUserService currentUser, AppDbContext db) =>
+{
+    if (!await currentUser.HasPermissionAsync("Roles.Manage"))
+        return Results.Forbid();
+
+    var users = await db.Users
+        .Select(u => new UserDto(
+            u.Id,
+            u.Email,
+            u.DisplayName,
+            u.IsActive,
+            u.UserRoles.Select(ur => ur.Role.Name).ToList()))
+        .ToListAsync();
+
+    return Results.Ok(users);
+}).RequireAuthorization();
+
+app.MapDelete("/api/v1/admin/users/{userId:guid}/roles/{roleId:guid}", async (
+    Guid userId, Guid roleId, ICurrentUserService currentUser, AppDbContext db) =>
+{
+    if (!await currentUser.HasPermissionAsync("Roles.Manage"))
+        return Results.Forbid();
+
+    var userRole = await db.UserRoles
+        .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
+
+    if (userRole is null)
+        return Results.NotFound(new { error = "User does not have this role." });
+
+    db.UserRoles.Remove(userRole);
+    await db.SaveChangesAsync();
+
+    return Results.Ok(new { message = "Role removed from user successfully." });
 }).RequireAuthorization();
 
 app.Run();

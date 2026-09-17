@@ -11,6 +11,8 @@ public interface ICurrentUserService
     string? KeycloakSubjectId { get; }
     bool IsAuthenticated { get; }
 
+    Task EnsureUserProvisionedAsync(CancellationToken ct = default);
     Task<IReadOnlySet<string>> GetPermissionsAsync(CancellationToken ct = default);
     Task<bool> HasPermissionAsync(string permissionName, CancellationToken ct = default);
 }
+

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using ERPPortal.Application.Interfaces;
+using ERPPortal.Domain.Entities;
 using ERPPortal.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,39 @@ public class CurrentUserService : ICurrentUserService
 
     // Keycloak puts the user's unique ID in the standard "sub" claim.
     public string? KeycloakSubjectId => User?.FindFirst("sub")?.Value;
+
+    /// <summary>
+    /// "Just-in-time" provisioning: if this is the first time we've seen this
+    /// Keycloak identity, create a matching row in our own Users table using
+    /// claims already present in their JWT. Safe to call on every request —
+    /// it's a no-op once the user already exists.
+    /// </summary>
+    public async Task EnsureUserProvisionedAsync(CancellationToken ct = default)
+    {
+        if (!IsAuthenticated || KeycloakSubjectId is null)
+            return;
+
+        var exists = await _db.Users.AnyAsync(u => u.KeycloakSubjectId == KeycloakSubjectId, ct);
+        if (exists)
+            return;
+
+        var email = User?.FindFirst("email")?.Value ?? string.Empty;
+        var displayName = User?.FindFirst("name")?.Value
+            ?? User?.FindFirst("preferred_username")?.Value
+            ?? email;
+
+        _db.Users.Add(new User
+        {
+            Id = Guid.NewGuid(),
+            KeycloakSubjectId = KeycloakSubjectId,
+            Email = email,
+            DisplayName = displayName,
+            IsActive = true,
+            CreatedAtUtc = DateTime.UtcNow
+        });
+
+        await _db.SaveChangesAsync(ct);
+    }
 
     public async Task<IReadOnlySet<string>> GetPermissionsAsync(CancellationToken ct = default)
     {
