@@ -24,9 +24,11 @@ function handleLogout() {
       </li>
     </ul>
 
-    <p v-if="authStore.can('Roles.Manage')">
-      You can manage roles and permissions.
-    </p>
+    <nav v-if="authStore.can('Roles.Manage')">
+      <router-link to="/admin/roles">Manage Roles & Permissions</router-link>
+      |
+      <router-link to="/admin/users">Manage Users</router-link>
+    </nav>
     <p v-else>
       You do not have permission to manage roles.
     </p>
