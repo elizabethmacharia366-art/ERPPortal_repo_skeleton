@@ -47,32 +47,65 @@ onMounted(loadRoles)
 </script>
 
 <template>
-  <div>
-    <h1>Roles & Permissions</h1>
+  <div class="space-y-6">
+    <h1 class="text-2xl font-semibold">Roles &amp; Permissions</h1>
 
-    <p v-if="error" style="color: red">{{ error }}</p>
-    <p v-if="loading">Loading...</p>
+    <p v-if="error" class="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+      {{ error }}
+    </p>
+    <p v-if="loading" class="text-slate-500">Loading...</p>
 
-    <table v-else border="1" cellpadding="6">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Description</th>
-          <th>Permissions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="role in roles" :key="role.id">
-          <td>{{ role.name }}</td>
-          <td>{{ role.description }}</td>
-          <td>{{ role.permissions.join(', ') || '(none)' }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div v-else class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-slate-100 text-xs uppercase tracking-wide text-slate-500">
+          <tr>
+            <th class="px-4 py-3">Role</th>
+            <th class="px-4 py-3">Permissions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr v-for="role in roles" :key="role.id">
+            <td class="px-4 py-3">
+              <div class="font-medium">{{ role.name }}</div>
+              <div class="text-slate-500">{{ role.description }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-for="permission in role.permissions"
+                  :key="permission"
+                  class="rounded-full bg-emerald-100 px-3 py-1 text-emerald-800"
+                >
+                  {{ permission }}
+                </span>
+                <span v-if="!role.permissions.length" class="text-slate-400">No permissions</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-    <h2>Create a role</h2>
-    <input v-model="newRoleName" placeholder="Role name" />
-    <input v-model="newRoleDescription" placeholder="Description (optional)" />
-    <button @click="createRole">Create</button>
+    <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <h2 class="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">Create a role</h2>
+      <div class="flex flex-wrap gap-3">
+        <input
+          v-model="newRoleName"
+          placeholder="Role name"
+          class="rounded border border-slate-300 px-3 py-2 text-sm"
+        />
+        <input
+          v-model="newRoleDescription"
+          placeholder="Description (optional)"
+          class="min-w-64 flex-1 rounded border border-slate-300 px-3 py-2 text-sm"
+        />
+        <button
+          class="rounded bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700"
+          @click="createRole"
+        >
+          Create
+        </button>
+      </div>
+    </section>
   </div>
 </template>

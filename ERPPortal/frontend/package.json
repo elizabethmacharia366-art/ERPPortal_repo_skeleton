@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.3.5",
     "axios": "^1.7.5",
     "oidc-client-ts": "^3.5.0",
     "pinia": "^2.3.1",
+    "tailwindcss": "^4.3.5",
     "vue": "^3.4.38",
     "vue-router": "^4.4.3"
   },

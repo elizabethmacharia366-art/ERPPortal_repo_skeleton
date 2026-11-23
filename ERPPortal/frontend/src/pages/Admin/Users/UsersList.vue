@@ -67,42 +67,62 @@ onMounted(loadData)
 </script>
 
 <template>
-  <div>
-    <h1>Users</h1>
+  <div class="space-y-4">
+    <h1 class="text-2xl font-semibold">Users</h1>
 
-    <p v-if="error" style="color: red">{{ error }}</p>
-    <p v-if="loading">Loading...</p>
+    <p v-if="error" class="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+      {{ error }}
+    </p>
+    <p v-if="loading" class="text-slate-500">Loading...</p>
 
-    <table v-else border="1" cellpadding="6">
-      <thead>
-        <tr>
-          <th>Email</th>
-          <th>Display Name</th>
-          <th>Roles</th>
-          <th>Assign a role</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="user in users" :key="user.id">
-          <td>{{ user.email }}</td>
-          <td>{{ user.displayName }}</td>
-          <td>
-            <span v-for="role in user.roles" :key="role">
-              {{ role }}
-              <button @click="removeRole(user.id, role)">✕</button>
-            </span>
-            <span v-if="!user.roles.length">(none)</span>
-          </td>
-          <td>
-            <select @change="(e) => assignRole(user.id, (e.target as HTMLSelectElement).value)">
-              <option value="">-- pick a role --</option>
-              <option v-for="role in roles" :key="role.id" :value="role.name">
-                {{ role.name }}
-              </option>
-            </select>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div v-else class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-slate-100 text-xs uppercase tracking-wide text-slate-500">
+          <tr>
+            <th class="px-4 py-3">User</th>
+            <th class="px-4 py-3">Roles</th>
+            <th class="px-4 py-3">Assign a role</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr v-for="user in users" :key="user.id">
+            <td class="px-4 py-3">
+              <div class="font-medium">{{ user.displayName }}</div>
+              <div class="text-slate-500">{{ user.email }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-for="role in user.roles"
+                  :key="role"
+                  class="inline-flex items-center gap-1 rounded-full bg-sky-100 px-3 py-1 text-sky-800"
+                >
+                  {{ role }}
+                  <button
+                    class="text-sky-600 hover:text-red-600"
+                    title="Remove role"
+                    @click="removeRole(user.id, role)"
+                  >
+                    &times;
+                  </button>
+                </span>
+                <span v-if="!user.roles.length" class="text-slate-400">No roles</span>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <select
+                class="rounded border border-slate-300 bg-white px-2 py-1"
+                @change="(e) => assignRole(user.id, (e.target as HTMLSelectElement).value)"
+              >
+                <option value="">Pick a role</option>
+                <option v-for="role in roles" :key="role.id" :value="role.name">
+                  {{ role.name }}
+                </option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
