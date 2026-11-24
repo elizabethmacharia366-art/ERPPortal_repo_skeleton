@@ -36,6 +36,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
@@ -78,6 +79,9 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
@@ -175,12 +179,13 @@ app.MapPost("/api/v1/admin/permissions", async (
     if (!await currentUser.HasPermissionAsync("Roles.Manage"))
         return Results.Forbid();
 
-    if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Module))
-        return Results.BadRequest(new { error = "Permission name and module are required." });
+    var validationErrors = request.Validate();
+    if (validationErrors.Count > 0)
+        return Results.ValidationProblem(validationErrors);
 
     var exists = await db.Permissions.AnyAsync(p => p.Name == request.Name);
     if (exists)
-        return Results.Conflict(new { error = $"A permission named '{request.Name}' already exists." });
+        return Results.Problem(title: "Conflict", detail: $"A permission named '{request.Name}' already exists.", statusCode: StatusCodes.Status409Conflict);
 
     var permission = new Permission
     {
@@ -201,12 +206,13 @@ app.MapPost("/api/v1/admin/roles", async (
     if (!await currentUser.HasPermissionAsync("Roles.Manage"))
         return Results.Forbid();
 
-    if (string.IsNullOrWhiteSpace(request.Name))
-        return Results.BadRequest(new { error = "Role name is required." });
+    var validationErrors = request.Validate();
+    if (validationErrors.Count > 0)
+        return Results.ValidationProblem(validationErrors);
 
     var exists = await db.Roles.AnyAsync(r => r.Name == request.Name);
     if (exists)
-        return Results.Conflict(new { error = $"A role named '{request.Name}' already exists." });
+        return Results.Problem(title: "Conflict", detail: $"A role named '{request.Name}' already exists.", statusCode: StatusCodes.Status409Conflict);
 
     var role = new Role { Id = Guid.NewGuid(), Name = request.Name, Description = request.Description };
     db.Roles.Add(role);
@@ -242,7 +248,7 @@ app.MapDelete("/api/v1/admin/users/{userId:guid}/roles/{roleId:guid}", async (
         .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
 
     if (userRole is null)
-        return Results.NotFound(new { error = "User does not have this role." });
+        return Results.Problem(title: "Not Found", detail: "User does not have this role.", statusCode: StatusCodes.Status404NotFound);
 
     db.UserRoles.Remove(userRole);
     await db.SaveChangesAsync();

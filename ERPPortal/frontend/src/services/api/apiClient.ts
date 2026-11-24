@@ -2,6 +2,23 @@ import { authService } from '@/services/auth/authService'
 
 const API_BASE = 'http://localhost:5000'
 
+interface ProblemDetails {
+  title?: string
+  detail?: string
+  errors?: Record<string, string[]>
+}
+
+function messageFrom(problem: ProblemDetails | null, status: number): string {
+  if (problem?.errors) {
+    const messages = Object.values(problem.errors).flat()
+    if (messages.length) return messages.join(' ')
+  }
+  if (problem?.detail) return problem.detail
+  if (problem?.title) return problem.title
+  if (status === 403) return 'You do not have permission to do that.'
+  return `Request failed with status ${status}`
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = await authService.getAccessToken()
 
@@ -15,8 +32,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   })
 
   if (!response.ok) {
-    const body = await response.json().catch(() => null)
-    throw new Error(body?.error ?? `Request failed with status ${response.status}`)
+    const problem = (await response.json().catch(() => null)) as ProblemDetails | null
+    throw new Error(messageFrom(problem, response.status))
   }
 
   if (response.status === 204) {
