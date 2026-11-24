@@ -5,12 +5,26 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ERPPortal.API\ERPPortal.API.csproj" />
     <ProjectReference Include="..\ERPPortal.Application\ERPPortal.Application.csproj" />
     <ProjectReference Include="..\ERPPortal.Domain\ERPPortal.Domain.csproj" />
+    <ProjectReference Include="..\ERPPortal.Infrastructure\ERPPortal.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
