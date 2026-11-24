@@ -1,8 +1,5 @@
 import { UserManager, WebStorageStateStore, type User } from 'oidc-client-ts'
 
-// Points at our real Keycloak realm and the erpportal-api client we created.
-// In a real multi-environment setup, these values would come from environment
-// variables (VITE_KEYCLOAK_AUTHORITY, etc.) rather than being hardcoded here.
 const userManager = new UserManager({
   authority: 'http://localhost:8080/realms/erpportal',
   client_id: 'erpportal-api',
@@ -11,6 +8,8 @@ const userManager = new UserManager({
   response_type: 'code',
   scope: 'openid profile email',
   userStore: new WebStorageStateStore({ store: window.localStorage }),
+  // Renew the access token shortly before it expires (uses the refresh token).
+  automaticSilentRenew: true,
 })
 
 class AuthService {
@@ -30,9 +29,28 @@ class AuthService {
     await userManager.signoutRedirect()
   }
 
+  /** Try to get a fresh access token. Returns false if the session can't be renewed. */
+  async refresh(): Promise<boolean> {
+    try {
+      const user = await userManager.signinSilent()
+      return user !== null
+    } catch {
+      return false
+    }
+  }
+
+  /** Forget the local session without a round trip to Keycloak. */
+  async clearSession(): Promise<void> {
+    await userManager.removeUser()
+  }
+
   async getAccessToken(): Promise<string | null> {
-    const user = await userManager.getUser()
-    return user?.access_token ?? null
+    let user = await userManager.getUser()
+    if (user?.expired) {
+      await this.refresh()
+      user = await userManager.getUser()
+    }
+    return user && !user.expired ? user.access_token : null
   }
 }
 

@@ -19,7 +19,7 @@ function messageFrom(problem: ProblemDetails | null, status: number): string {
   return `Request failed with status ${status}`
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}, isRetry = false): Promise<T> {
   const token = await authService.getAccessToken()
 
   const response = await fetch(`${API_BASE}${path}`, {
@@ -30,6 +30,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       ...options.headers,
     },
   })
+
+  if (response.status === 401) {
+    // Token rejected: renew once and retry, otherwise send the user back to login.
+    if (!isRetry && (await authService.refresh())) {
+      return request<T>(path, options, true)
+    }
+    await authService.clearSession()
+    window.location.href = '/login'
+    throw new Error('Your session has expired. Please sign in again.')
+  }
 
   if (!response.ok) {
     const problem = (await response.json().catch(() => null)) as ProblemDetails | null
